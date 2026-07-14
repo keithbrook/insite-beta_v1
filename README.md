@@ -1,186 +1,53 @@
-# INSITE Beta — 테스터 가이드 (v0.1.7 · macOS Apple Silicon)
+# INSITE — a local AI workspace where conversations become knowledge
 
-> **다운로드**: https://github.com/keithbrook/insite-beta_v1/releases/latest
-> · `INSITE_0.1.7_aarch64.dmg` (앱)
-> · `insite-mcp.mcpb` (**Claude Desktop 연결을 쓴다면 함께** — 앱만 업데이트하면 커넥터가 끊깁니다)
->
-> 아래는 릴리스에 동봉된 `INSTALL-GUIDE-v0.1.7.md` 와 **같은 문서**입니다.
+> Your AI conversations, sedimented into a knowledge map you own — entirely on your machine.
+
+Most of what you work out with an AI simply evaporates. Good decisions, careful reasoning, hard-won context — trapped in a chat log, gone by the next session, re-explained from scratch every time. **INSITE is a desktop app that turns conversations into documents, connects those documents into a living map, and lets your next conversation start on top of everything you already know.** Knowledge map on the left, chat on the right — talk becomes knowledge, and knowledge becomes the memory of your next talk.
 
 ---
 
-비개발자도 따라올 수 있게 순서대로 적었습니다. **막히면 맨 아래 "문제가 생기면"**을 보세요.
+## What makes it different
 
-> ⚠️ **먼저 알려드립니다**: 이 버전은 **깨끗한 새 컴퓨터에서의 사전 테스트를 못 했습니다**(장비 제약).
-> ★ **성공하든 실패하든 결과를 보내주세요** — **성공도 데이터입니다**(맨 아래 ⓪ 머신 정보 형식으로).
-> 그래서 **당신의 첫 설치가 사실상 그 테스트**입니다. 막히는 게 **정상**이고, **막힌 지점을 알려주시는 게
-> 이 베타의 목적**입니다. 가능하면 **화면공유로 함께** 진행하시길 권합니다(맨 아래 참조).
+**1. Everything on your machine, everything just files.**
+Every note is plain Markdown (.md). It opens in Finder, edits in Obsidian, and remains yours if you delete the app. No account, no server — the app sends nothing anywhere.
 
-> **v0.1.6부터: 답변용 로컬 엔진(ollama)을 두 방식 중 하나로 씁니다.**
-> - **이미 ollama가 있으면** → 앱이 자동으로 그걸 씁니다(따로 설치 안 함).
-> - **없으면** → 앱이 첫 로컬 모델을 받을 때 전용 엔진(143MB)을 스스로 설치합니다.
->
-> 어느 쪽인지는 앱 **맨 아래 오른쪽 "엔진" 표시**로 항상 확인됩니다 — `엔진 시스템`(당신 ollama) / `엔진 관리형`(앱 전용) / `엔진: 없음`(아직 설치 전).
+**2. Designed not to make things up.**
+Answers cite your notes by coordinate, and when there's no evidence, it **says so**. The AI never saves anything on its own (saving always goes through your confirmation), unconfirmed suggestions carry an explicit `[unconfirmed]` label, and everything saved records its provenance — your decision, or the AI's suggestion. The biggest risk of an AI that remembers is remembering wrong; half of this app exists to prevent exactly that.
 
-> **v0.1.7에서 바뀐 것 — 이건 꼭 읽어주세요.**
-> - **앱이 이제 자기 API에 자물쇠를 겁니다**(같은 컴퓨터의 다른 프로그램이 당신 노트를 몰래 읽는 걸 막습니다).
-> - ★ **Claude Desktop 연결(MCP)을 쓰신다면 `insite-mcp.mcpb`(어댑터)도 함께 설치해주세요.**
->   **앱만 업데이트하면 커넥터가 인증 실패로 끊깁니다.** 두 파일이 한 세트입니다.
-> - **문제 보고가 훨씬 쉬워졌습니다** — 이제 **앱 안에서 파일 하나를 만들어 보내주시면** 됩니다(맨 아래).
+**3. Your documents have versions and lineage.**
+Rewriting a document never destroys the previous version — it stays in the lineage. You can diff any two versions, and the record shows what materials the rewrite used and who wrote it (you or the AI). Code has git. Now your writing has this.
 
----
+**4. Knowledge becomes a map.**
+Documents, conversations, and folders are drawn as a navigable graph. When a conversation branches, the branches show on the map; superseded versions hang off dotted lineage edges. You navigate the structure of your own thinking — that's the difference between this and a search box.
 
-## 0. 필요한 것
+**5. It connects to Claude Desktop.**
+Install the bundled MCP connector and Claude can recall your INSITE knowledge like memory. "What did we decide last time?" gets a real answer in a brand-new session.
 
-- **Apple Silicon Mac** (M1 이상). 인텔 Mac은 아직 지원하지 않습니다.
-- **답변용 LLM** — 둘 중 하나:
-  - **로컬 (무료·추천)**: `ollama` + 모델 2개(`qwen2.5:14b` 답변용, `bge-m3` 검색용). → 아래 **1단계**에서 두 경로 중 택1.
-  - **클라우드**: Anthropic 또는 OpenAI API 키 (앱 설정에서 입력).
-- 디스크 여유 **약 12GB** (로컬 모델: qwen2.5:14b ≈ 9GB, bge-m3 ≈ 1.2GB). 앱이 엔진을 설치하는 경우 여기에 **엔진 143MB**가 더해집니다.
+**6. Local AI by default, cloud only by choice.**
+If you have ollama installed, INSITE connects to it automatically; if not, the app provisions a managed local engine. Cloud models run only when you explicitly enable them — and the fallback is always local.
 
 ---
 
-## 1. (로컬 사용 시) 두 경로 중 하나
+## Who it's for
 
-### 경로 A — 이미 ollama를 쓰고 있다면 (권장 · 가장 매끄러움)
-
-앱이 부팅 때 당신의 시스템 ollama(`http://127.0.0.1:11434`)를 자동 감지해 그대로 씁니다. **따로 설치할 것 없습니다.** 두 가지만 확인:
-
-1) **버전** — `ollama 0.3.4 이상`이어야 앱이 채택합니다(임베딩 API 계약). 확인:
-   ```
-   ollama --version
-   ```
-   낮으면 업데이트(`brew upgrade ollama` 또는 https://ollama.com/download). *너무 낮은 버전이면 앱이 자동으로 "관리형" 엔진으로 폴백하고 그 사유를 배너로 알립니다.*
-2) **모델 2개** (터미널 · 한 번만):
-   ```
-   ollama pull qwen2.5:14b
-   ollama pull bge-m3
-   ```
-3) ollama가 켜져 있는지 — 메뉴바 아이콘이 있거나 `ollama serve`. (**메뉴바 앱 = 로그인 시 자동 시작·상주**라 가장 안정적입니다. 터미널의 `ollama serve`는 그 창을 닫으면 함께 꺼지니 주의.)
-
-### 경로 B — ollama가 없다면 (앱이 알아서 설치)
-
-**아무것도 미리 설치하지 마세요.** 앱 첫 실행 마법사에서 "로컬"을 고르고 모델 다운로드를 시작하면, 앱이:
-1. 전용 엔진(**143MB**)을 `~/.insite/ollama`에 자동 다운로드·기동(진행률 표시), 그다음
-2. 고른 모델(`qwen2.5:14b`)을 내려받습니다.
-
-엔진은 앱 전용 포트(`:11500`)에서 돕니다. *이미 받아둔 모델이 있으면 재사용하므로 모델은 다시 안 받습니다.*
-
-> 클라우드 키를 쓸 거라면 1단계를 통째로 건너뛰고, 마법사에서 "클라우드"를 골라 키를 입력하면 됩니다.
+- **Anyone running a long project** — planning, research, or a startup — tired of watching decisions and context evaporate between AI sessions
+- **Anyone who writes with AI** — and wants drafts, revisions, and source material to stay untangled, with the system knowing which version is current
+- **Anyone who wants AI without the cloud residue** — a tool where privacy is the default, not a setting
 
 ---
 
-## 2. INSITE 앱 설치
+## Install (about 10 minutes)
 
-> **업그레이드(이전 버전을 쓰고 있었다면)**: 새 버전을 설치·실행하기 전에 **기존 INSITE를 완전히 종료**하세요(⌘Q, 메뉴 → INSITE 종료). macOS가 실행 중인 구버전을 그대로 앞으로 불러오는 경우가 있어, 종료하지 않으면 신버전이 안 뜨거나 두 버전이 겹쳐 동작이 꼬일 수 있습니다. (v0.1.6부터 신버전이 기존 인스턴스를 자동으로 넘겨받지만, macOS가 신 실행 자체를 막는 경우를 피하려면 먼저 종료가 확실합니다.)
+1. **Requirements**: macOS (Apple Silicon)
+2. Download `INSITE_0.1.7_aarch64.dmg` from the [latest release](../../releases/latest)
+3. Follow the bundled **[INSTALL-GUIDE-v0.1.7.md](../../releases/latest)** — this is an unsigned beta, so first launch is right-click → Open
+4. Using Claude Desktop? Install `insite-mcp.mcpb` as well — **the app and adapter ship as a set**
 
-1) 릴리스 페이지 **Assets**에서 `INSITE_0.1.7_aarch64.dmg` 다운로드.
-2) `.dmg`를 더블클릭 → 열린 창에서 **INSITE 아이콘을 Applications 폴더로 드래그**.
-3) **첫 실행 (중요)**: 응용 프로그램에서 INSITE를 **더블클릭하면 "확인되지 않은 개발자" 경고**가 뜹니다(아직 Apple 공증 전이라 정상).
-   - **INSITE 아이콘을 우클릭(control+클릭) → "열기" → 다시 "열기"** 를 누르세요. 딱 한 번만 하면 됩니다.
-   - "휴지통으로 이동" 버튼만 보이고 "열기"가 없다면: 터미널에서 아래 한 줄을 실행한 뒤 다시 우클릭→열기:
-     ```
-     xattr -dr com.apple.quarantine /Applications/INSITE.app
-     ```
+## Privacy promises
 
----
+- Conversations, documents, and indexes all live locally. Disk encryption is delegated to macOS FileVault — the app deliberately does not encrypt your files, because your files staying plainly *yours* (openable by any tool) is the product's identity.
+- Even problem reports contain only numbers and settings — zero conversation or document content. The app never sends them; you save a plain-text file, read it yourself, and decide.
 
-## 3. 첫 실행 흐름
+## Beta status — honest disclosure
 
-1) 앱이 뜨면 **설정 마법사**가 나옵니다:
-   - **LLM**: "로컬(무료)" 또는 "클라우드(키 입력)" 중 선택. (경로 B라면 여기서 모델 다운로드가 엔진 설치를 자동 트리거)
-   - **노트 폴더**: 기본값 `~/INSITE`면 권한 질문 없이 바로 됩니다.
-2) 채팅창에 아무거나 물어보세요. **첫 답변이 나오면 성공**입니다.
-3) INSITE는 의미 있는 대화를 자동으로 **브리프(짧은 노트)**로 저장합니다 — 잠시 뒤 왼쪽 목록에 나타납니다.
-
-### Claude Desktop 연결(선택)
-1) 릴리스 Assets에서 `insite-mcp.mcpb` 다운로드.
-2) INSITE 앱을 **켠 상태**에서 Claude Desktop → 설정 → 확장(Extensions) → `insite-mcp.mcpb`를 끌어다 놓고 활성화.
-
----
-
-## 4. 화면 하단 상태 표시 읽는 법 (v0.1.7)
-
-앱 **맨 아래 오른쪽**에 두 표시가 있습니다:
-
-- **엔진 표시** (어느 엔진을 쓰는지 항상 보임):
-  - `엔진 시스템 · :11434 · v…` → 당신의 ollama를 씀(경로 A).
-  - `엔진 관리형 · :11500 · v0.30.10` → 앱 전용 엔진을 씀(경로 B).
-  - `엔진: 없음` (노란색) → 아직 로컬 엔진이 없음 → 아래 **연결 배너**의 **[지금 설치]**를 누르세요.
-- **LLM/emb 표시**:
-  - `LLM 로컬 · emb 켜짐` → 정상. 의미 검색까지 활성.
-  - `⚠ LLM: 의미검색 대기(ollama/bge-m3 확인)` (노란색) → 엔진은 붙었지만 `bge-m3`가 아직 없음. `ollama pull bge-m3` 끝나면 **재시작 없이 ~20초 뒤 자동 회복**.
-
-**연결 배너(엔진 자체가 안 붙을 때만 뜸) — 3가지 상태:**
-- **시스템 ollama가 응답하지 않아요** → 경로 A인데 ollama가 꺼짐. `brew services restart ollama`(또는 메뉴바 앱 실행).
-- **로컬 엔진이 없어요 → [지금 설치]** → 경로 B 미설치. 버튼 한 번이면 앱이 엔진(143MB)을 받습니다.
-- **로컬 엔진 설치 실패: … → [다시 시도]** → 다운로드가 끊긴 경우. 버튼으로 재시도.
-
----
-
-## 문제가 생기면 — ★ **이제 파일 하나면 됩니다**
-
-> v0.1.6까지는 터미널 명령 3~4개를 붙여넣어야 했습니다. **v0.1.7부터는 앱이 대신 모아줍니다.**
-
-### ★ 문제 보고서 (권장 · 이것 하나로 대부분 특정됩니다)
-
-```
-앱 왼쪽 아래 [설정] → [정보] 탭 → "문제 보고서" 칸에 한 줄 적기
-  (예: "모델 받는 중 3분째 멈춰요")
-→ [문제 보고서 만들기] → 요약이 뜨면 → [파일로 저장] → 그 파일을 보내주세요
-```
-
-**무엇이 들어가나요?** — **수치와 설정뿐입니다.**
-· 머신 정보(macOS·칩) · 엔진 상태(연결 여부·버전) · 응답 시간 · 오류 메시지
-· **대화 내용과 문서 본문은 들어가지 않습니다.** 문서 제목도 안 들어갑니다(암호화된 식별자만).
-· **앱은 이 파일을 아무 데도 보내지 않습니다.** 저장만 하고, **보낼지는 당신이 정합니다.**
-· 평문(JSON)이라 **열어서 직접 확인**하실 수 있습니다. 보내기 전에 한번 열어보셔도 됩니다.
-
-### 함께 보내주시면 좋은 것 2가지
-
-**⓪ 머신 정보 한 줄** — ★ **성공했을 때도 보내주세요**(성공도 데이터입니다):
-```
-macOS 버전 (  Apple 메뉴 → 이 Mac에 관하여 )
-칩         ( Apple Silicon M1/M2/M3… )
-메모리     ( 8GB / 16GB / … )
-```
-*(문제 보고서에도 들어 있지만, 앱이 아예 안 켜질 때는 이것만이라도 보내주세요.)*
-
-**① 스크린샷** — **막힌 그 화면 통째로**(배너·버튼·하단 상태줄이 다 보이게)
-그리고 **어느 단계에서** 막혔는지 한 줄.
-
----
-
-### 앱이 아예 안 켜질 때 (문제 보고서를 만들 수 없는 경우)
-
-```
-ollama --version                          # 0.3.4 이상인지
-ollama list                               # qwen2.5:14b, bge-m3 있는지
-curl -s http://127.0.0.1:11434/api/tags   # 시스템 ollama 응답
-```
-그리고 **Console.app** 실행 → 검색창에 `INSITE` → 최근 20줄 복사.
-
-> ⚠️ **v0.1.6 가이드의 `curl …/health` 는 v0.1.7 에서 더 이상 그대로 동작하지 않습니다** —
-> 자물쇠가 걸려서 인증 없이는 거부됩니다(`unauthorized`). **문제 보고서를 쓰세요** — 같은 정보가 들어 있습니다.
-
-**보낼 곳**: 그대로 hoon 에게 (문제 보고서 파일 + 스크린샷).
-
----
-
-## ★★ 첫 설치는 **화면공유로 함께** 하시길 권합니다
-
-**왜**: 이 버전은 **깨끗한 컴퓨터에서의 사전 리허설을 못 했습니다**(솔직히 적습니다).
-**당신의 첫 10분이 사실상 그 검증입니다.**
-막히는 순간을 **같이 보면** 원인이 즉시 잡히고, 혼자 하시면 위 5종을 뜨는 수고가 듭니다.
-
-**같이 볼 때 확인할 3지점**:
-```
-1. 첫 실행    — "확인되지 않은 개발자" 경고 → 우클릭 → 열기 가 되는가
-2. 엔진 붙는가 — 하단 "엔진" 표시가 시스템/관리형 중 하나로 뜨는가 (없음 이면 여기서 막힌 것)
-3. 첫 대화    — 질문 하나 → 답변이 나오는가 (첫 답변은 모델 로딩 때문에 **몇 분** 걸릴 수 있습니다)
-```
-**3까지 가면 설치 성공**입니다. 어디서 멈췄는지만 알려주셔도 큰 도움이 됩니다.
-
----
-
-### 요약 (한 줄)
-**이미 ollama 있으면 그대로(경로 A) / 없으면 앱이 설치(경로 B).** 하단 "엔진" 표시로 어느 쪽인지 항상 확인 · 연결 배너가 뜨면 버튼 한 번. emb 노란 경고는 `bge-m3`만 받으면 ~20초 뒤 자동 회복.
+This is a beta. Known limitations and open verification items are listed plainly in each release's notes. If you get stuck, that's the most useful data you can give us: **Settings → Info → Create problem report → Save to file** → send us the file.
